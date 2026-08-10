@@ -1,20 +1,21 @@
 name: "Setup and Build"
-description: "Sets up Node, installs dependencies, runs tests and builds the package"
+description: "Sets up Node, pnpm, installs dependencies, runs tests and builds the package"
 
 runs:
   using: "composite"
   steps:
+    - uses: pnpm/action-setup@v6
     - uses: actions/setup-node@v6
       with:
         node-version: "latest"
         registry-url: "https://registry.npmjs.org"
-        cache: "npm"
+        cache: "pnpm"
     - name: Install dependencies
       shell: bash
-      run: npm ci
+      run: pnpm install --frozen-lockfile
     - name: Run tests
       shell: bash
-      run: npm test
+      run: pnpm test
     - name: Build package
       shell: bash
-      run: npm run build
+      run: pnpm build
