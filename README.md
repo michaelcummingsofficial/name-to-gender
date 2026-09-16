@@ -5,8 +5,8 @@
 [![npm version](https://img.shields.io/npm/v/name-to-gender.svg)](https://www.npmjs.com/package/name-to-gender)
 [![npm downloads](https://img.shields.io/npm/dm/name-to-gender.svg)](https://www.npmjs.com/package/name-to-gender)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/name-to-gender)](https://bundlephobia.com/package/name-to-gender)
-[![license](https://img.shields.io/github/license/michaelcummings12/name-to-gender)](https://github.com/michaelcummings12/name-to-gender/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/michaelcummings12/name-to-gender?style=social)](https://github.com/michaelcummings12/name-to-gender)
+[![license](https://img.shields.io/github/license/michaelcummingsofficial/name-to-gender)](https://github.com/michaelcummingsofficial/name-to-gender/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/michaelcummingsofficial/name-to-gender?style=social)](https://github.com/michaelcummingsofficial/name-to-gender)
 
 `name-to-gender` is a gender detection and gender prediction library that infers gender from a person's first name. Give it a name like `"Adam"` or `"Mary"` and it returns `"male"`, `"female"`, or `"unknown"`, along with a probability you can threshold on. It is data-driven rather than rule-based, ships its dataset offline with the package, and has **zero runtime dependencies**.
 
