@@ -106,12 +106,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AI_NOTES: ${{ steps.ai_generation.outputs.text }}
         run: |
+          # A failed publish leaves the release behind, so a rerun skips creating it again.
+          if gh release view v${{ needs.check-version.outputs.version }} > /dev/null 2>&1; then
+            echo "Release v${{ needs.check-version.outputs.version }} already exists."
+            exit 0
+          fi
           printf "%s\n" "$AI_NOTES" > release_notes.md
           gh release create v${{ needs.check-version.outputs.version }} \
             --notes-file release_notes.md \
             --title "v${{ needs.check-version.outputs.version }}"
 
+      # Authenticates with npm trusted publishing (OIDC via id-token: write), which also adds provenance.
       - name: Publish to NPM
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
