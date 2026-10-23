@@ -1,49 +1,106 @@
 /**
- * Regenerates `src/data/us.json` from the US Social Security Administration
- * national baby-names dataset (public domain).
+ * Regenerates `src/data/` from the US Social Security Administration national
+ * baby-names dataset (public domain).
  *
  * Usage:
  *   1. Download https://www.ssa.gov/oact/babynames/names.zip
  *   2. Unzip the `yobXXXX.txt` files into `scripts/source/`
- *   3. `npm run build:data`
+ *   3. `pnpm build:data`
  *
- * Each `yobXXXX.txt` line is `Name,Sex,Count` (e.g. `Mary,F,7065`). We sum every
- * year so each name carries its all-time male and female birth counts, which is
- * what lets us return a probability rather than a single hard-coded label.
+ * Each `yobXXXX.txt` line is `Name,Sex,Count` (e.g. `Mary,F,7065`). Counts are
+ * summed per decade so lookups can be limited to a range of birth years.
+ *
+ * Output format (decoded by `src/createDataset.ts`): one space-separated record per
+ * name, sorted by name:
+ *
+ *   <shared prefix length, 0-9><rest of name><first decade, A = 1880s><decades>
+ *
+ * The name is front-coded against the previous record. `<decades>` is a `;`-separated
+ * run of `male,female` counts in base 36, one per decade from the first decade with
+ * births to the last. A zero count is empty, and `,female` is dropped when female is 0.
+ *
+ *   "4yAcq;aq;...;763,mjn" -> "riley" after "riles": 1880s 458 male, ..., 2020s 9291 male, 29219 female
  */
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const LITE_MIN_BIRTHS = 50;
 const here = dirname(fileURLToPath(import.meta.url));
 const sourceDir = join(here, "source");
-const outFile = join(here, "..", "src", "data", "us.json");
-
-// name -> [maleCount, femaleCount]
-const counts = new Map<string, [number, number]>();
-
-const files = readdirSync(sourceDir).filter((f) => /^yob\d{4}\.txt$/.test(f));
+const outDir = join(here, "..", "src", "data");
+const files = readdirSync(sourceDir)
+	.filter((file) => /^yob\d{4}\.txt$/.test(file))
+	.sort();
 if (files.length === 0) {
-  throw new Error(`No yobXXXX.txt files found in ${sourceDir}. See the header comment for setup steps.`);
+	throw new Error(`No yobXXXX.txt files found in ${sourceDir}. See the header comment for setup steps.`);
 }
 
+const yearOf = (file: string) => Number(file.slice(3, 7));
+const firstYear = yearOf(files[0]!);
+const lastYear = yearOf(files.at(-1)!);
+const decadeCount = Math.floor((lastYear - firstYear) / 10) + 1;
+// name -> [male, female, male, female, ...], one pair per decade
+const counts = new Map<string, number[]>();
 for (const file of files) {
-  const text = readFileSync(join(sourceDir, file), "utf8");
-  for (const line of text.split("\n")) {
-    const [rawName, sex, rawCount] = line.trim().split(",");
-    if (!rawName || !sex) continue;
-    const name = rawName.toLowerCase();
-    const count = Number.parseInt(rawCount ?? "", 10) || 0;
-    const entry = counts.get(name) ?? [0, 0];
-    if (sex === "M") entry[0] += count;
-    else if (sex === "F") entry[1] += count;
-    counts.set(name, entry);
-  }
+	const decade = Math.floor((yearOf(file) - firstYear) / 10);
+	for (const line of readFileSync(join(sourceDir, file), "utf8").split("\n")) {
+		const [rawName, sex, rawCount] = line.trim().split(",");
+		if (!rawName || (sex !== "M" && sex !== "F")) {
+			continue;
+		}
+
+		const name = rawName.toLowerCase();
+		const entry = counts.get(name) ?? new Array<number>(decadeCount * 2).fill(0);
+		entry[decade * 2 + (sex === "M" ? 0 : 1)]! += Number.parseInt(rawCount ?? "", 10) || 0;
+		counts.set(name, entry);
+	}
 }
 
-// Sort keys so regenerating produces a stable, diff-friendly file.
-const sorted: Record<string, [number, number]> = {};
-for (const name of [...counts.keys()].sort()) sorted[name] = counts.get(name)!;
+const base36 = (count: number) => (count ? count.toString(36) : "");
+const births = (entry: number[]) => entry.reduce((sum, count) => sum + count, 0);
 
-writeFileSync(outFile, JSON.stringify(sorted));
-console.log(`Wrote ${Object.keys(sorted).length} names from ${files.length} year files to ${outFile}`);
+function encode(names: string[]): string {
+	let previous = "";
+	return names
+		.map((name) => {
+			const entry = counts.get(name)!;
+			const hasBirths = (decade: number) => entry[decade * 2]! + entry[decade * 2 + 1]! > 0;
+			let first = 0;
+			while (!hasBirths(first)) {
+				first++;
+			}
+
+			let last = decadeCount - 1;
+			while (!hasBirths(last)) {
+				last--;
+			}
+
+			const decades: string[] = [];
+			for (let decade = first; decade <= last; decade++) {
+				const female = entry[decade * 2 + 1]!;
+				decades.push(base36(entry[decade * 2]!) + (female ? `,${base36(female)}` : ""));
+			}
+
+			let shared = 0;
+			while (shared < 9 && name[shared] !== undefined && name[shared] === previous[shared]) {
+				shared++;
+			}
+
+			previous = name;
+			return `${shared}${name.slice(shared)}${String.fromCharCode(65 + first)}${decades.join(";")}`;
+		})
+		.join(" ");
+}
+
+function writeModule(file: string, contents: string) {
+	writeFileSync(join(outDir, file), `// Generated by scripts/build-data.ts. Do not edit.\n${contents}\n`);
+}
+
+const names = [...counts.keys()].sort();
+const liteNames = names.filter((name) => births(counts.get(name)!) >= LITE_MIN_BIRTHS);
+mkdirSync(outDir, { recursive: true });
+writeModule("years.ts", `export const DATA_YEARS = [${firstYear}, ${lastYear}] as const;`);
+writeModule("us.ts", `export default ${JSON.stringify(encode(names))};`);
+writeModule("us-lite.ts", `export default ${JSON.stringify(encode(liteNames))};`);
+console.log(`Wrote ${names.length} names (${liteNames.length} lite) from ${firstYear} to ${lastYear} to ${outDir}`);

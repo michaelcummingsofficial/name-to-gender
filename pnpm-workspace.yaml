@@ -1,4 +1,6 @@
 # Postinstall scripts pnpm is allowed to run (pnpm blocks them by default).
 # esbuild fetches its native binary here; tsup and vitest both need it.
+# unrs-resolver builds the native resolver eslint-plugin-import-x uses.
 allowBuilds:
   esbuild: true
+  unrs-resolver: true

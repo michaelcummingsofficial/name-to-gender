@@ -1,70 +1,84 @@
 {
-  "name": "name-to-gender",
-  "version": "1.0.3",
-  "description": "Guess gender from a first name using US Social Security data. Returns a probability and the raw birth counts. TypeScript, ESM + CJS, zero dependencies.",
-  "homepage": "https://github.com/michaelcummingsofficial/name-to-gender#readme",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "sideEffects": false,
-  "scripts": {
-    "build": "tsup",
-    "build:data": "tsx scripts/build-data.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "prepublishOnly": "npm run build"
-  },
-  "keywords": [
-    "gender",
-    "gender detection",
-    "gender guess",
-    "gender prediction",
-    "guess gender",
-    "name to gender",
-    "name gender",
-    "first name",
-    "first name gender",
-    "infer gender",
-    "predict gender",
-    "detect gender",
-    "sex",
-    "male",
-    "female",
-    "names",
-    "baby names",
-    "ssa",
-    "social security",
-    "census",
-    "demographics",
-    "typescript"
-  ],
-  "author": "Michael Cummings (https://www.michaelcummin.gs)",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/michaelcummingsofficial/name-to-gender.git"
-  },
-  "bugs": {
-    "url": "https://github.com/michaelcummingsofficial/name-to-gender/issues"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "license": "MIT",
-  "packageManager": "pnpm@11.20.0",
-  "devDependencies": {
-    "tsup": "^8.5.1",
-    "tsx": "^4.23.11",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.10"
-  }
+	"name": "name-to-gender",
+	"version": "1.1.0",
+	"description": "Guess gender from a first name using US Social Security data. Returns a probability and the raw birth counts, with zero dependencies.",
+	"homepage": "https://github.com/michaelcummingsofficial/name-to-gender#readme",
+	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		},
+		"./lite": {
+			"types": "./dist/lite.d.ts",
+			"import": "./dist/lite.js",
+			"require": "./dist/lite.cjs"
+		}
+	},
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsup",
+		"build:data": "tsx scripts/build-data.ts",
+		"format": "eslint . --fix && prettier --write \"**/*.ts\"",
+		"lint": "tsc --noEmit && eslint . && prettier --check \"**/*.ts\"",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"prepublishOnly": "pnpm build"
+	},
+	"keywords": [
+		"gender",
+		"gender detection",
+		"gender guess",
+		"gender prediction",
+		"guess gender",
+		"name to gender",
+		"name gender",
+		"first name",
+		"first name gender",
+		"infer gender",
+		"predict gender",
+		"detect gender",
+		"sex",
+		"male",
+		"female",
+		"names",
+		"baby names",
+		"ssa",
+		"social security",
+		"census",
+		"demographics",
+		"typescript"
+	],
+	"author": "Michael Cummings (https://www.michaelcummin.gs)",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/michaelcummingsofficial/name-to-gender.git"
+	},
+	"bugs": {
+		"url": "https://github.com/michaelcummingsofficial/name-to-gender/issues"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"license": "MIT",
+	"packageManager": "pnpm@11.20.0",
+	"devDependencies": {
+		"@types/node": "^26.6.5",
+		"@typescript-eslint/parser": "^8.72.0",
+		"eslint": "^10.13.0",
+		"eslint-plugin-import-x": "^4.17.1",
+		"jiti": "^2.7.0",
+		"prettier": "^3.9.10",
+		"prettier-plugin-organize-imports": "^4.3.0",
+		"tsup": "^9.0.0",
+		"tsx": "^4.23.15",
+		"typescript": "^6.0.3",
+		"vitest": "^5.0.5"
+	}
 }

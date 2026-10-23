@@ -1,0 +1,50 @@
+name: Update data
+
+# The SSA publishes the previous year's names each May.
+on:
+  schedule:
+    - cron: "0 14 1 6 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "latest"
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download SSA names
+        # ssa.gov sits behind a bot filter that sometimes rejects plain curl. If this
+        # step fails, follow "Updating the dataset" in CONTRIBUTING.md locally instead.
+        run: |
+          curl -sSfL -o names.zip \
+            -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15" \
+            https://www.ssa.gov/oact/babynames/names.zip
+          unzip -q -o names.zip 'yob*.txt' -d scripts/source
+      - name: Rebuild data
+        id: data
+        run: |
+          pnpm build:data
+          echo "years=$(grep -o '\[[0-9, ]*\]' src/data/years.ts)" >> "$GITHUB_OUTPUT"
+      - name: Test
+        run: pnpm test
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: update-data
+          commit-message: Update SSA data to ${{ steps.data.outputs.years }}
+          title: Update SSA data to ${{ steps.data.outputs.years }}
+          body: |
+            Rebuilt `src/data/` from the latest SSA release, now covering ${{ steps.data.outputs.years }}.
+
+            Bump the version in `package.json` before merging so the release workflow publishes it.
+          add-paths: src/data

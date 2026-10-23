@@ -1,5 +1,5 @@
 name: "Setup and Build"
-description: "Sets up Node, pnpm, installs dependencies, runs tests and builds the package"
+description: "Sets up Node, pnpm, installs dependencies, lints, runs tests and builds the package"
 
 runs:
   using: "composite"
@@ -13,6 +13,9 @@ runs:
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
+    - name: Lint
+      shell: bash
+      run: pnpm lint
     - name: Run tests
       shell: bash
       run: pnpm test

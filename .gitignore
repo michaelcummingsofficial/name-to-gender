@@ -17,3 +17,6 @@ node_modules/
 **/*.tgz
 
 dist/
+
+# SSA source files for scripts/build-data.ts
+scripts/source/
